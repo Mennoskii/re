@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 T_0 = 280+273 # Inlet temperature (K) -> Fill in with correct value
 P_0 =  20# Inlet pressure (bar) -> Fill in with correct value
 GHSV =  3000# Gas-hourly space velocity (h-1)
+GHSV_s = GHSV/3600
 Ta_0 = 0 # Inlet temperature of the cooling liquid (K) -> Fill in with correct value
 m_c = 0 # Inlet flow of the cooling liquid (kg/s) -> Fill in with correct value
 
@@ -72,7 +73,7 @@ d_cat = 0.001 # Diameter of spherical catalyst particles (m)
 
 eps = 0.3 # Effective void fraction of catalyst bed (-)-> Fill in with correct value
 rho_cat =  3950 # Density of Ni/Al2O3 catalyst (kg/m³)-> Fill in with correct value
-rho_bed =  150* #-> Fill in with correct formula
+rho_bed =  rho_cat*(1-eps)*4/3*np.pi*d_cat**3 #-> Fill in with correct formula
 U = 0 # Global heat transfer coefficient (W/m².K) -> Fill in with correct value
 dH_vap_ref = 1.603E+03 # Enthalpy of vaporization of cooling water (kJ/kg) at 55 bar
 
@@ -108,69 +109,74 @@ dH_CH4 = -20 # Adsorption enthalpy for CH4 (J/mol)-> Fill in the correct value
 
 # v.  Calculate inlet flow:
 R = 8.314 # Ideal gas constant (J/mol.K)
-F_0 =  # initial flowrate into  reactor  (mol/s) -> Fill in with correct formula (use GHSV)
+V = L*np.pi*d_tube**2/4
+F_0 = GHSV_s*(V)*((P_0)/(R*T_0)) # initial flowrate into  reactor  (mol/s) -> Fill in with correct formula (use GHSV)
 
 # 3) ------- Define functions: ------- 
 def rates(p,T):
     # Create a function for rates(p,T) -> Fill in with correct formulas
-    k_1 = 
-    k_2 = 
-    K_C = 
-    K_H = 
-    K_CO = 
-    K_H2 = 
-    K_H2O = 
-    K_CH4 = 
+    k_1 = k_1_0 * np.exp(-E_1/(R*T))
+    k_2 = k_2_0*np.exp(-E_2/(R*T))
+    K_C = K_C_0 * np.exp(-dH_C/(R*T))
+    K_H = K_H_0 * np.exp(-dH_H/(R*T))
+    K_CO = K_CO_0 * np.exp(-dH_CO/(R*T))
+    K_H2 = K_H2_0*np.exp((-dH_H2)/(R*T))
+    K_H2O = K_H2O_0*np.exp((-dH_H2O)/(R*T))
+    K_CH4 = K_CH4_0*np.exp((-dH_CH4)/(R*T))
     K_METH = np.exp(26830/T-30.114)
-    K_WGS = 
+    K_WGS = np.exp(4400/T-4.036)
     if p[3] == 0:
         r_meth = 0
     else:
-        r_meth = 1 #-> Fill in with correct formula
-    r_WGS = k_2/p[1]**2 #-> Fill in with correct formula
+        r_meth = (-k_1*K_C*K_H**2*p[3]**0.5*p[1])/((1+K_C*p[3]**0.5+K_H*p[1]**0,5)**3) + #-> Fill in with correct formula
+    r_WGS = ((k_2/p[1])*(p[3]*p[2]-(p[1]*p[0])/K_WGS))/(1+K_CO*p[3]+K_H2*p[1]+K_CH4*p[4]+(K_H2O*p[2])/p[1]) #-> Fill in with correct formula
     r=[r_WGS, r_meth]
     return r
 
 def Mr_mix(y):
     # Create a function for Mr_mix(y)-> Fill in with correct formula
-    Mr_g = 0
+    Mr_g = y[0]*Mr_CO2+y[1]*Mr_H2+y[2]*Mr_H2O+y[3]*Mr_CO+y[4]*Mr_CH4+y[5]*Mr_I
     return Mr_g
 
 def cp_mix(y,T):
     # Create a function for cp_mix(y,T)-> Fill in with correct formulas
     
-    cp_CO2=
-    cp_H2=
-    cp_H2O=
-    cp_CO=
-    cp_CH4=
-    cp_I=
+    cp_CO2= cp_iCO2 + (T - 473)*dcp_CO2
+    cp_H2= cp_i_H2 + (T - 473)*dcp_H2
+    cp_H2O= cp_i_H2O + (T - 473) * dcp_H20
+    cp_CO= cp_CO_ref + (T - 473) * dcp_C0
+    cp_CH4= cp_CH4_ref + (T - 473) * dcp_CH4
+    cp_I= cp_I_ref + (T - 473)*dcp_I
     
-    cp_g =  #-> Fill in with correct formula
+    cp_g = y[0]*cp_CO2+y[1]*cp_H2+y[2]*cp_H2O+y[3]*cp_CO+y[4]*cp_CH4+y[5]*cp_I #-> Fill in with correct formula
     return cp_g
 
 def mu_mix(y,T):
     # Create a function for mu_mix(p,T)-> Fill in with correct formulas
     
-    mu_CO2=
+    mu_CO2= mu_CO2_ref + (T - 473)*dmu_CO2
+    mu_H2= mu_H2_ref + (T - 473)*dmu_H2
+    mu_H2O= mu_H2O_ref + (T - 473)*dmu_H2O
+    mu_CO= mu_CO_ref + (T - 473)*dmu_CO
+    mu_CH4= mu_CH4_ref + (T - 473)*dmu_CH4
+    mu_I= mu_I_ref + (T - 473)*dmu_I
     
-    
-    mu_g = #-> Fill in with correct formula
+    mu_g = y[0]*mu_CO2+y[1]*mu_H2+y[2]*mu_H2O+y[3]*mu_CO+y[4]*mu_CH4+y[5]*mu_I #-> Fill in with correct formula
     return mu_g
 
 def rho_mix(Mr_g, P, T):
     # Create a function for rho_mix(Mr_g,p,T)-> Fill in with correct formula
-    rho_g = 0
+    rho_g = (P*Mr_g)/(R*T)
     return rho_g
 
 # 4) ------- Spatial discretization: ------- 
 n_z = 100 # Number of segments in reactor 
-dz =  # Segment size (m) -> Fill in with correct formula
-S = # Cross-sectional area of 1 reactor tube (m²) -> Fill in with correct formula
-Peri =  # Perimeter of 1 reactor tube (m) -> Fill in with correct formula
-dV =  # Unit volume (m³) -> Fill in with correct formula
-dA =  # Unit area (m²) -> Fill in with correct formula
-a =  # Specific area / volume (m²/m³) -> Fill in with correct formula
+dz = L/n_z  # Segment size (m) -> Fill in with correct formula
+S = d_tube**2/4*np.pi# Cross-sectional area of 1 reactor tube (m²) -> Fill in with correct formula
+Peri = d_tube*np.pi # Perimeter of 1 reactor tube (m) -> Fill in with correct formula
+dV =  S*dz# Unit volume (m³) -> Fill in with correct formula
+dA = S # Unit area (m²) -> Fill in with correct formula
+a = dA/dV # Specific area / volume (m²/m³) -> Fill in with correct formula
 
 # Lists & dictionaries:
 Y_list = np.zeros((n_z + 1, 9)) # Results of balances
@@ -194,7 +200,7 @@ Mr_0 = Mr_mix(y_list[0])
 mu_0 = mu_mix(y_list[0], T_list[0])
 cp_0 = cp_mix(y_list[0], T_list[0])
 rho_0 = rho_mix(Mr_0, P_list[0], T_list[0]) 
-u_0 =  # Gas velocity (m/s) -> Fill in with correct formula
+u_0 = GHSV_s*V/S # Gas velocity (m/s) -> Fill in with correct formula
 
 # 6) ------- Define ODE system: 1-dimensional, steady-state, non-isothermal FBR: ------- 
 tol1 = 1E-12
@@ -219,7 +225,7 @@ def ode_system(z,Y):
     y = F/F_tot
     p = y*P
     
-    u =  # Gas velocity (m/s) -> Fill in with the correct formula 
+    u = F_tot/(P*dA/(R*T)) # Gas velocity (m/s) -> Fill in with the correct formula 
     
     Mr_g = Mr_mix(y)
     mu_g = mu_mix(y, T)
@@ -285,13 +291,13 @@ def ode_system(z,Y):
     dH_COmeth = dH_COmeth_ref + cp_g*(T - T_ref)
     dH_WGS = dH_WGS_ref + cp_g*(T - T_ref)
             
-    dT_dz =   # Fill in the correct formula
+    dT_dz = 0  # Fill in the correct formula
     if dT_dz > 5E+03:
         dT_dz = 5E+03
     elif dT_dz < -5E+03:
         dT_dz = -5E+03
     
-    dTa_dz =  # Fill in the correct formula
+    dTa_dz = 0 # Fill in the correct formula
     if dTa_dz > 5E+03/((m_c)*Cp_c):
         dTa_dz = 5E+03/((m_c)*Cp_c)
     elif dTa_dz < -5E+03/((m_c)*Cp_c):
