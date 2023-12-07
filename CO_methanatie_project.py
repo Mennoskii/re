@@ -16,8 +16,8 @@ GHSV_s = GHSV/3600
 Ta_0 = 0 # Inlet temperature of the cooling liquid (K) -> Fill in with correct value
 m_c = 0 # Inlet flow of the cooling liquid (kg/s) -> Fill in with correct value
 
-y_CO2_0 = 0.0 # Molar fraction of CO2 (mol%) -> Fill in with correct value
-y_H2_0 = 0.0 # Molar fraction of H2 (mol%) -> Fill in with correct value
+y_CO2_0 = 0.2 # Molar fraction of CO2 (mol%) -> Fill in with correct value
+y_H2_0 = 0.8 # Molar fraction of H2 (mol%) -> Fill in with correct value
 y_H2O_0 = 0 # Molar fraction of H2O (mol%) -> Fill in with correct value
 y_CO_0 = 0.0 # Molar fraction of CO (mol%) -> Fill in with correct value
 y_CH4_0 = 0.0 # Molar fraction of CH4 (mol%) -> Fill in with correct value
@@ -128,7 +128,7 @@ def rates(p,T):
     if p[3] == 0:
         r_meth = 0
     else:
-        r_meth = (-k_1*K_C*K_H**2*p[3]**0.5*p[1])/((1+K_C*p[3]**0.5+K_H*p[1]**0,5)**3) + #-> Fill in with correct formula
+        r_meth = (-k_1*K_C*K_H**2*p[3]**0.5*p[1])/((1+K_C*p[3]**0.5+K_H*p[1]**0.5)**3)  #-> Fill in with correct formula
     r_WGS = ((k_2/p[1])*(p[3]*p[2]-(p[1]*p[0])/K_WGS))/(1+K_CO*p[3]+K_H2*p[1]+K_CH4*p[4]+(K_H2O*p[2])/p[1]) #-> Fill in with correct formula
     r=[r_WGS, r_meth]
     return r
@@ -141,10 +141,10 @@ def Mr_mix(y):
 def cp_mix(y,T):
     # Create a function for cp_mix(y,T)-> Fill in with correct formulas
     
-    cp_CO2= cp_iCO2 + (T - 473)*dcp_CO2
-    cp_H2= cp_i_H2 + (T - 473)*dcp_H2
-    cp_H2O= cp_i_H2O + (T - 473) * dcp_H20
-    cp_CO= cp_CO_ref + (T - 473) * dcp_C0
+    cp_CO2= cp_CO2_ref + (T - 473)*dcp_CO2
+    cp_H2= cp_H2_ref + (T - 473)*dcp_H2
+    cp_H2O= cp_H2O_ref + (T - 473) * dcp_H2O
+    cp_CO= cp_CO_ref + (T - 473) * dcp_CO
     cp_CH4= cp_CH4_ref + (T - 473) * dcp_CH4
     cp_I= cp_I_ref + (T - 473)*dcp_I
     
@@ -292,16 +292,16 @@ def ode_system(z,Y):
     dH_WGS = dH_WGS_ref + cp_g*(T - T_ref)
             
     dT_dz = 0  # Fill in the correct formula
-    if dT_dz > 5E+03:
-        dT_dz = 5E+03
-    elif dT_dz < -5E+03:
-        dT_dz = -5E+03
+    #if dT_dz > 5E+03:
+    #    dT_dz = 5E+03
+    #elif dT_dz < -5E+03:
+    #    dT_dz = -5E+03
     
     dTa_dz = 0 # Fill in the correct formula
-    if dTa_dz > 5E+03/((m_c)*Cp_c):
-        dTa_dz = 5E+03/((m_c)*Cp_c)
-    elif dTa_dz < -5E+03/((m_c)*Cp_c):
-        dTa_dz = -5E+03/((m_c)*Cp_c)
+    #if dTa_dz > 5E+03/((m_c)*Cp_c):
+    #    dTa_dz = 5E+03/((m_c)*Cp_c)
+    #elif dTa_dz < -5E+03/((m_c)*Cp_c):
+    #    dTa_dz = -5E+03/((m_c)*Cp_c)
     
     
     # Pressure-drop:
