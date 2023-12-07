@@ -314,7 +314,7 @@ def ode_system(z,Y):
 
 # 7) ------- Solve ODE system: ------- 
 for z in range(n_z):
-    print(z)
+    #print(z)
     sol = solve_ivp(ode_system, (0, dz), Y_list[z], method="Radau")
     #print(sol)
     Y_list[z+1] = sol.y[:,-1]
