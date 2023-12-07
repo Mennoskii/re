@@ -15,7 +15,6 @@ GHSV =  3000# Gas-hourly space velocity (h-1)
 GHSV_s = GHSV/3600
 Ta_0 = 280+273 # Inlet temperature of the cooling liquid (K) -> Fill in with correct value
 m_c = 0 # Inlet flow of the cooling liquid (kg/s) -> Fill in with correct value
-
 y_CO2_0 = 0.2 # Molar fraction of CO2 (mol%) -> Fill in with correct value
 y_H2_0 = 0.8 # Molar fraction of H2 (mol%) -> Fill in with correct value
 y_H2O_0 = 0 # Molar fraction of H2O (mol%) -> Fill in with correct value
@@ -131,9 +130,9 @@ def rates(p,T):
         r_meth = 0  # or any other appropriate value or action
     else:
         r_meth = (
-            (-k_1 * K_C * K_H**2 * np.sqrt(p[3]) * np.sqrt(p[1]))
+            (-k_1 * K_C * K_H**2 * np.sqrt(p[3]) * p[1])
             / ((1 + K_C * np.sqrt(p[3]) + K_H * np.sqrt(p[1]))**3)
-            + (k_1 * K_C * K_H**2 * (p[4] * p[2]) / (np.sqrt(p[3]) * p[1]**2))
+            + (k_1 * K_C * K_H**2 * (p[4] * p[2]) / (np.sqrt(p[3]) * p[1]**2)*(1/K_METH))
             / ((1 + K_C * np.sqrt(p[3]) + K_H * np.sqrt(p[1]))**3)
         )
 
@@ -232,7 +231,7 @@ def ode_system(z,Y):
     F_tot = sum(F)
     y = F/F_tot
     p = y*P
-    print(F_tot,y)
+    #print(F_tot,y)
     
     u = F_tot/(P*1e5*dA/(R*T)) # Gas velocity (m/s) -> Fill in with the correct formula 
     
@@ -336,6 +335,10 @@ for z in range(n_z):
 #print(F_list[98:100,:])
    
 #%% 8) ------- Plotting: ------- 
+import numpy as np
+from scipy.integrate import solve_ivp
+import math
+import matplotlib.pyplot as plt 
 plt.figure(0)
 plt.plot(np.linspace(0,L,n_z+1), T_list - 273.15, label="x")
 plt.plot(np.linspace(0,L,n_z+1), Ta_list - 273.15, label="y")
