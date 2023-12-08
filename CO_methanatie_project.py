@@ -132,12 +132,12 @@ def rates(p,T):
         r_meth = (
             (-k_1 * K_C * K_H**2 * np.sqrt(p[3]) * p[1])
             / ((1 + K_C * np.sqrt(p[3]) + K_H * np.sqrt(p[1]))**3)
-            + (k_1 * K_C * K_H**2 * (p[4] * p[2]) / (np.sqrt(p[3]) * p[1]**2)*(1/K_METH))
+            + (k_1 * K_C * K_H**2 * ((p[4] * p[2]) / (np.sqrt(p[3])) * p[1]**2)*(1/K_METH))
             / ((1 + K_C * np.sqrt(p[3]) + K_H * np.sqrt(p[1]))**3)
         )
 
     #-> Fill in with correct formula
-    r_WGS = ((k_2/p[1])*(p[3]*p[2]-(p[1]*p[0])/K_WGS))/(1+K_CO*p[3]+K_H2*p[1]+K_CH4*p[4]+(K_H2O*p[2])/p[1]) #-> Fill in with correct formula
+    r_WGS = ((k_2/p[1])*(p[3]*p[2]-(p[1]*p[0])/K_WGS))/(1+K_CO*p[3]+K_H2*p[1]+K_CH4*p[4]+(K_H2O*p[2])/p[1])**2 #-> Fill in with correct formula
     r=[r_WGS, r_meth]
     return r
 
@@ -173,8 +173,8 @@ def mu_mix(y,T):
     return mu_g
 
 def rho_mix(Mr_g, P, T):
-    # Create a function for rho_mix(Mr_g,p,T)-> Fill in with correct formula
-    rho_g = (P*1e5*Mr_g)/(R*T)
+    # Create a function for rho_mix(Mr_g,p,T)-> Fill in with correct formula (kg/m3)
+    rho_g = (P*1e2*Mr_g)/(R*T)
     return rho_g
 
 # 4) ------- Spatial discretization: ------- 
@@ -208,7 +208,7 @@ mu_0 = mu_mix(y_list[0], T_list[0])
 cp_0 = cp_mix(y_list[0], T_list[0])
 rho_0 = rho_mix(Mr_0, P_list[0], T_list[0]) 
 u_0 = GHSV_s*V/S # Gas velocity (m/s) -> Fill in with correct formula
-
+#print(Y_list[0])
 # 6) ------- Define ODE system: 1-dimensional, steady-state, non-isothermal FBR: ------- 
 tol1 = 1E-12
 tol2 = 1E-12
@@ -231,9 +231,9 @@ def ode_system(z,Y):
     F_tot = sum(F)
     y = F/F_tot
     p = y*P
-    #print(F_tot,y)
-    
-    u = F_tot/(P*1e5*dA/(R*T)) # Gas velocity (m/s) -> Fill in with the correct formula 
+    #print(P,y)
+    C = P*1e5/(R*T)
+    u = F_tot/dA * (1/C) # Gas velocity (m/s) -> Fill in with the correct formula 
     
     Mr_g = Mr_mix(y)
     mu_g = mu_mix(y, T)
@@ -314,17 +314,19 @@ def ode_system(z,Y):
     
     # Pressure-drop:
     dP_dz = -(150*mu_g*((1-eps)**2)*u/((eps**3)*(d_cat**2)) + 1.75*(1-eps)*rho_g*(u**2)/((eps**3)*d_cat))*1E-05 # (bar)
-    
+    #print(mu_g,rho_g,dP_dz,u)
     #combine all differential equations    
     dY_dz = np.concatenate([dF_dz, [dT_dz, dTa_dz, dP_dz]])
    
     return dY_dz
 
 # 7) ------- Solve ODE system: ------- 
-for z in range(n_z):
-    #print(z)
+for z in range(77):
+    print(f"z = {z}")
+    print(f"Y_list[{z}] = {Y_list[z]}")
     sol = solve_ivp(ode_system, (0, dz), Y_list[z], method="Radau")
-    #print(sol)
+    print(f"sol.y[:,-1] = {sol.y[:,-1]}")
+    Y_list[z+1] = sol.y[:,-1]
     Y_list[z+1] = sol.y[:,-1]
     F_list[z+1] = Y_list[z+1][:6]
     T_list[z+1] = Y_list[z+1][6]
@@ -332,6 +334,7 @@ for z in range(n_z):
     P_list[z+1] = Y_list[z+1][6+2]
     y_list[z+1] = F_list[z+1]/sum(F_list[z+1])
     p_list[z+1] = y_list[z+1]*P_list[z+1]
+    #print(P_list)
 #print(F_list[98:100,:])
    
 #%% 8) ------- Plotting: ------- 
@@ -355,4 +358,23 @@ plt.plot(np.linspace(0,L,n_z+1), F_list[:,0]+F_list[:,3]+F_list[:,4], label="CAR
 plt.xlabel('Reactor length (m)')
 plt.ylabel('mol/s')
 plt.title('Molar flowrates:')
+plt.legend()
+
+plt.figure(2)
+plt.plot(np.linspace(0,L,n_z+1), P_list, label="P")
+plt.xlabel('Reactor length (m)')
+plt.ylabel('Pressure (bar)')
+plt.title('Pressure profile:')
+plt.legend()
+
+plt.figure(3)
+plt.plot(np.linspace(0,L,n_z+1), p_list[:,0], label="CO2")
+plt.plot(np.linspace(0,L,n_z+1), p_list[:,3], label="CO")
+plt.plot(np.linspace(0,L,n_z+1), p_list[:,4], label="CH4")
+plt.plot(np.linspace(0,L,n_z+1), p_list[:,1], label="H2")
+plt.plot(np.linspace(0,L,n_z+1), p_list[:,2], label="H20")
+plt.plot(np.linspace(0,L,n_z+1), p_list[:,0]+p_list[:,3]+p_list[:,4], label="CARBON")
+plt.xlabel('Reactor length (m)')
+plt.ylabel('bar')
+plt.title('partial pressure:')
 plt.legend()
