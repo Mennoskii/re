@@ -321,7 +321,7 @@ def ode_system(z,Y):
     return dY_dz
 
 # 7) ------- Solve ODE system: ------- 
-for z in range(77):
+for z in range(78):
     print(f"z = {z}")
     print(f"Y_list[{z}] = {Y_list[z]}")
     sol = solve_ivp(ode_system, (0, dz), Y_list[z], method="Radau")
