@@ -109,7 +109,7 @@ dH_CH4 = -38280 # Adsorption enthalpy for CH4 (J/mol)-> Fill in the correct valu
 # v.  Calculate inlet flow:
 R = 8.314 # Ideal gas constant (J/mol.K)
 V = L*np.pi*d_tube**2/4
-F_0 = GHSV_s*(V)*((P_0*1e5)/(R*T_0)) # initial flowrate into  reactor  (mol/s) -> Fill in with correct formula (use GHSV)
+F_0 = GHSV_s*(V)*((1e5)/(R*298)) # initial flowrate into  reactor  (mol/s) -> Fill in with correct formula (use GHSV)
 #print(F_0)
 # 3) ------- Define functions: ------- 
 def rates(p,T):
@@ -207,7 +207,7 @@ Mr_0 = Mr_mix(y_list[0])
 mu_0 = mu_mix(y_list[0], T_list[0])
 cp_0 = cp_mix(y_list[0], T_list[0])
 rho_0 = rho_mix(Mr_0, P_list[0], T_list[0]) 
-u_0 = GHSV_s*V/S # Gas velocity (m/s) -> Fill in with correct formula
+u_0 = F_0/(1e5*) # Gas velocity (m/s) -> Fill in with correct formula
 #print(Y_list[0])
 # 6) ------- Define ODE system: 1-dimensional, steady-state, non-isothermal FBR: ------- 
 tol1 = 1E-12
@@ -321,7 +321,7 @@ def ode_system(z,Y):
     return dY_dz
 
 # 7) ------- Solve ODE system: ------- 
-for z in range(78):
+for z in range(n_z):
     print(f"z = {z}")
     print(f"Y_list[{z}] = {Y_list[z]}")
     sol = solve_ivp(ode_system, (0, dz), Y_list[z], method="Radau")
