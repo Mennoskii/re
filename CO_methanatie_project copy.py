@@ -14,7 +14,7 @@ P_0 =  20# Inlet pressure (bar) -> Fill in with correct value
 GHSV =  3000# Gas-hourly space velocity (h-1)
 GHSV_s = GHSV/3600
 Ta_0 = 270+273 # Inlet temperature of the cooling liquid (K) -> Fill in with correct value
-m_c = 0.05 # Inlet flow of the cooling liquid (kg/s) -> Fill in with correct value
+m_c = 0.1 # Inlet flow of the cooling liquid (kg/s) -> Fill in with correct value
 y_CO2_0 = 0.2 # Molar fraction of CO2 (mol%) -> Fill in with correct value
 y_H2_0 = 0.8 # Molar fraction of H2 (mol%) -> Fill in with correct value
 y_H2O_0 = 0 # Molar fraction of H2O (mol%) -> Fill in with correct value
@@ -130,9 +130,9 @@ def rates(p,T):
         r_meth = 0  # or any other appropriate value or action
     else:
         r_meth = (
-            (-k_1 * K_C * K_H**2 * np.sqrt(p[3]) * p[1])
+            (-k_1 * K_C * K_H2**2 * np.sqrt(p[3]) * p[1])
             / ((1 + K_C * np.sqrt(p[3]) + K_H * np.sqrt(p[1]))**3)
-            + (k_1 * K_C * K_H**2 * ((p[4] * p[2]) / (np.sqrt(p[3])) * p[1]**2)*(1/K_METH))
+            + (k_1 * K_C * K_H2**2 * ((p[4] * p[2]) / (np.sqrt(p[3])) * p[1]**2)*(1/K_METH))
             / ((1 + K_C * np.sqrt(p[3]) + K_H * np.sqrt(p[1]))**3)
         )
 
@@ -299,7 +299,7 @@ def ode_system(z,Y):
     dH_COmeth = dH_COmeth_ref + cp_g*(T - T_ref)
     dH_WGS = dH_WGS_ref + cp_g*(T - T_ref)
 
-    dT_dz = ((U*a*(Ta-T))-((r[0]*dH_WGS+r[1]*dH_COmeth)*rho_bed))/(F_tot*cp_g)*S  # Fill in the correct formula
+    dT_dz = (((r[0]*dH_WGS+r[1]*dH_COmeth)*rho_bed)+(U*4/d_tube*(Ta-T)))/(F_tot*cp_g)*S  # Fill in the correct formula
     if dT_dz > 5E+03:
         dT_dz = 5E+03
     elif dT_dz < -5E+03:
