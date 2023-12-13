@@ -11,12 +11,10 @@ import matplotlib.pyplot as plt
 # i. Feed conditions:  
 T_0 = 280+273 # Inlet temperature (K) -> Fill in with correct value
 P_0 =  20# Inlet pressure (bar) -> Fill in with correct value
-R = 8.314 # Ideal gas constant (J/mol.K)
-C_0 = P_0/(R*T_0)
 GHSV =  3000# Gas-hourly space velocity (h-1)
 GHSV_s = GHSV/3600
-Ta_0 = 280+273 # Inlet temperature of the cooling liquid (K) -> Fill in with correct value
-m_c = 0 # Inlet flow of the cooling liquid (kg/s) -> Fill in with correct value
+Ta_0 = 270+273 # Inlet temperature of the cooling liquid (K) -> Fill in with correct value
+m_c = 0.1 # Inlet flow of the cooling liquid (kg/s) -> Fill in with correct value
 y_CO2_0 = 0.2 # Molar fraction of CO2 (mol%) -> Fill in with correct value
 y_H2_0 = 0.8 # Molar fraction of H2 (mol%) -> Fill in with correct value
 y_H2O_0 = 0 # Molar fraction of H2O (mol%) -> Fill in with correct value
@@ -75,7 +73,7 @@ d_cat = 0.001 # Diameter of spherical catalyst particles (m)
 eps = 0.3 # Effective void fraction of catalyst bed (-)-> Fill in with correct value
 rho_cat =  3950 # Density of Ni/Al2O3 catalyst (kg/m³)-> Fill in with correct value
 rho_bed =  rho_cat*(1-eps) #-> Fill in with correct formula
-U = 0 # Global heat transfer coefficient (W/m².K) -> Fill in with correct value
+U = 650 # Global heat transfer coefficient (W/m².K) -> Fill in with correct value
 dH_vap_ref = 1.603E+03 # Enthalpy of vaporization of cooling water (kJ/kg) at 55 bar
 
 # iv. Kinetic model parameters: 
@@ -132,9 +130,9 @@ def rates(p,T):
         r_meth = 0  # or any other appropriate value or action
     else:
         r_meth = (
-            (-k_1 * K_C * K_H**2 * np.sqrt(p[3]) * p[1])
+            (-k_1 * K_C * K_H2**2 * np.sqrt(p[3]) * p[1])
             / ((1 + K_C * np.sqrt(p[3]) + K_H * np.sqrt(p[1]))**3)
-            + (k_1 * K_C * K_H**2 * ((p[4] * p[2]) / (np.sqrt(p[3])) * p[1]**2)*(1/K_METH))
+            + (k_1 * K_C * K_H2**2 * ((p[4] * p[2]) / (np.sqrt(p[3])) * p[1]**2)*(1/K_METH))
             / ((1 + K_C * np.sqrt(p[3]) + K_H * np.sqrt(p[1]))**3)
         )
 
@@ -235,7 +233,7 @@ def ode_system(z,Y):
     p = y*P
     #print(P,y)
     C = P*1e5/(R*T)
-    u = F_tot/S * (1/C) # Gas velocity (m/s) -> Fill in with the correct formula 
+    u = F_tot/dA * (1/C) # Gas velocity (m/s) -> Fill in with the correct formula 
     
     Mr_g = Mr_mix(y)
     mu_g = mu_mix(y, T)
@@ -300,18 +298,19 @@ def ode_system(z,Y):
     # Energy balance:
     dH_COmeth = dH_COmeth_ref + cp_g*(T - T_ref)
     dH_WGS = dH_WGS_ref + cp_g*(T - T_ref)
-            
-    dT_dz = 0  # Fill in the correct formula
-    #if dT_dz > 5E+03:
-    #    dT_dz = 5E+03
-    #elif dT_dz < -5E+03:
-    #    dT_dz = -5E+03
+
+    dT_dz = (((r[0]*dH_WGS+r[1]*dH_COmeth)*rho_bed)+(U*4/d_tube*(Ta-T)))/(F_tot*cp_g)*S  # Fill in the correct formula
+    if dT_dz > 5E+03:
+        dT_dz = 5E+03
+    elif dT_dz < -5E+03:
+        dT_dz = -5E+03
     
+
     dTa_dz = 0 # Fill in the correct formula
-    #if dTa_dz > 5E+03/((m_c)*Cp_c):
-    #    dTa_dz = 5E+03/((m_c)*Cp_c)
-    #elif dTa_dz < -5E+03/((m_c)*Cp_c):
-    #    dTa_dz = -5E+03/((m_c)*Cp_c)
+    if dTa_dz > 5E+03/((m_c)*Cp_c):
+        dTa_dz = 5E+03/((m_c)*Cp_c)
+    elif dTa_dz < -5E+03/((m_c)*Cp_c):
+        dTa_dz = -5E+03/((m_c)*Cp_c)
     
     
     # Pressure-drop:
@@ -345,18 +344,16 @@ from scipy.integrate import solve_ivp
 import math
 import matplotlib.pyplot as plt 
 plt.figure(0)
-plt.plot(np.linspace(0,L,n_z+1), T_list - 273.15, label="x")
-plt.plot(np.linspace(0,L,n_z+1), Ta_list - 273.15, label="y")
+plt.plot(np.linspace(0,L,n_z+1), T_list - 273.15, label="T")
+plt.plot(np.linspace(0,L,n_z+1), Ta_list - 273.15, label="T_a")
 plt.xlabel('Reactor length (m)')
 plt.ylabel('Temperature (°C)')
 plt.title('Temperature profile:')
 plt.legend()
 
 plt.figure(1)
-plt.plot(np.linspace(0,L,n_z+1), F_list[:,0], label="CO2")
-plt.plot(np.linspace(0,L,n_z+1), F_list[:,1], label="H2")
-plt.plot(np.linspace(0,L,n_z+1), F_list[:,2], label="H2O")
-plt.plot(np.linspace(0,L,n_z+1), F_list[:,3], label="CO")
+plt.plot(np.linspace(0,L,n_z+1), F_list[:,0], label="u")
+plt.plot(np.linspace(0,L,n_z+1), F_list[:,3], label="v")
 plt.plot(np.linspace(0,L,n_z+1), F_list[:,4], label="CH4")
 plt.plot(np.linspace(0,L,n_z+1), F_list[:,0]+F_list[:,3]+F_list[:,4], label="CARBON")
 plt.xlabel('Reactor length (m)')
@@ -373,12 +370,12 @@ plt.legend()
 
 plt.figure(3)
 plt.plot(np.linspace(0,L,n_z+1), p_list[:,0], label="CO2")
-plt.plot(np.linspace(0,L,n_z+1), p_list[:,1], label="H2")
-plt.plot(np.linspace(0,L,n_z+1), p_list[:,2], label="H20")
 plt.plot(np.linspace(0,L,n_z+1), p_list[:,3], label="CO")
 plt.plot(np.linspace(0,L,n_z+1), p_list[:,4], label="CH4")
+plt.plot(np.linspace(0,L,n_z+1), p_list[:,1], label="H2")
+plt.plot(np.linspace(0,L,n_z+1), p_list[:,2], label="H20")
 plt.plot(np.linspace(0,L,n_z+1), p_list[:,0]+p_list[:,3]+p_list[:,4], label="CARBON")
 plt.xlabel('Reactor length (m)')
 plt.ylabel('bar')
-plt.title('Partial pressure:')
+plt.title('partial pressure:')
 plt.legend()

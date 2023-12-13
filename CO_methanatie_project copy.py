@@ -346,6 +346,7 @@ import matplotlib.pyplot as plt
 plt.figure(0)
 plt.plot(np.linspace(0,L,n_z+1), T_list - 273.15, label="T")
 plt.plot(np.linspace(0,L,n_z+1), Ta_list - 273.15, label="T_a")
+plt.plot(np.linspace(0,L,n_z+1), 280*np.ones(n_z+1), label="Threshold",color = "r",ls = "--")
 plt.xlabel('Reactor length (m)')
 plt.ylabel('Temperature (°C)')
 plt.title('Temperature profile:')
