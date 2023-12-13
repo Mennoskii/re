@@ -13,8 +13,8 @@ T_0 = 280+273 # Inlet temperature (K) -> Fill in with correct value
 P_0 =  20# Inlet pressure (bar) -> Fill in with correct value
 GHSV =  3000# Gas-hourly space velocity (h-1)
 GHSV_s = GHSV/3600
-Ta_0 = 280+273 # Inlet temperature of the cooling liquid (K) -> Fill in with correct value
-m_c = 0 # Inlet flow of the cooling liquid (kg/s) -> Fill in with correct value
+Ta_0 = 270+273 # Inlet temperature of the cooling liquid (K) -> Fill in with correct value
+m_c = 0.05 # Inlet flow of the cooling liquid (kg/s) -> Fill in with correct value
 y_CO2_0 = 0.2 # Molar fraction of CO2 (mol%) -> Fill in with correct value
 y_H2_0 = 0.8 # Molar fraction of H2 (mol%) -> Fill in with correct value
 y_H2O_0 = 0 # Molar fraction of H2O (mol%) -> Fill in with correct value
@@ -72,8 +72,8 @@ d_cat = 0.001 # Diameter of spherical catalyst particles (m)
 
 eps = 0.3 # Effective void fraction of catalyst bed (-)-> Fill in with correct value
 rho_cat =  3950 # Density of Ni/Al2O3 catalyst (kg/m³)-> Fill in with correct value
-rho_bed =  rho_cat*(1-eps)*4/3*np.pi*d_cat**3 #-> Fill in with correct formula
-U = 0 # Global heat transfer coefficient (W/m².K) -> Fill in with correct value
+rho_bed =  rho_cat*(1-eps) #-> Fill in with correct formula
+U = 650 # Global heat transfer coefficient (W/m².K) -> Fill in with correct value
 dH_vap_ref = 1.603E+03 # Enthalpy of vaporization of cooling water (kJ/kg) at 55 bar
 
 # iv. Kinetic model parameters: 
@@ -109,7 +109,7 @@ dH_CH4 = -38280 # Adsorption enthalpy for CH4 (J/mol)-> Fill in the correct valu
 # v.  Calculate inlet flow:
 R = 8.314 # Ideal gas constant (J/mol.K)
 V = L*np.pi*d_tube**2/4
-F_0 = GHSV_s*(V)*((P_0*1e5)/(R*T_0)) # initial flowrate into  reactor  (mol/s) -> Fill in with correct formula (use GHSV)
+F_0 = GHSV_s*(V)*((1e5)/(R*298)) # initial flowrate into  reactor  (mol/s) -> Fill in with correct formula (use GHSV)
 #print(F_0)
 # 3) ------- Define functions: ------- 
 def rates(p,T):
@@ -207,7 +207,7 @@ Mr_0 = Mr_mix(y_list[0])
 mu_0 = mu_mix(y_list[0], T_list[0])
 cp_0 = cp_mix(y_list[0], T_list[0])
 rho_0 = rho_mix(Mr_0, P_list[0], T_list[0]) 
-u_0 = GHSV_s*V/S # Gas velocity (m/s) -> Fill in with correct formula
+u_0 = F_0/(1e5*S)*R*298 # Gas velocity (m/s) -> Fill in with correct formula
 #print(Y_list[0])
 # 6) ------- Define ODE system: 1-dimensional, steady-state, non-isothermal FBR: ------- 
 tol1 = 1E-12
@@ -298,18 +298,19 @@ def ode_system(z,Y):
     # Energy balance:
     dH_COmeth = dH_COmeth_ref + cp_g*(T - T_ref)
     dH_WGS = dH_WGS_ref + cp_g*(T - T_ref)
+    dH_rx = np.array([dH_WGS,dH_COmeth])
             
-    dT_dz = 0  # Fill in the correct formula
-    #if dT_dz > 5E+03:
-    #    dT_dz = 5E+03
-    #elif dT_dz < -5E+03:
-    #    dT_dz = -5E+03
+    dT_dz = (U*dA/dV*(Ta-T)-np.dot(r,dH_rx))/(F_tot*cp_g)  # Fill in the correct formula
+    if dT_dz > 5E+03:
+        dT_dz = 5E+03
+    elif dT_dz < -5E+03:
+        dT_dz = -5E+03
     
-    dTa_dz = 0 # Fill in the correct formula
-    #if dTa_dz > 5E+03/((m_c)*Cp_c):
-    #    dTa_dz = 5E+03/((m_c)*Cp_c)
-    #elif dTa_dz < -5E+03/((m_c)*Cp_c):
-    #    dTa_dz = -5E+03/((m_c)*Cp_c)
+    dTa_dz = U*(T-Ta)/((m_c)*Cp_c) # Fill in the correct formula
+    if dTa_dz > 5E+03/((m_c)*Cp_c):
+        dTa_dz = 5E+03/((m_c)*Cp_c)
+    elif dTa_dz < -5E+03/((m_c)*Cp_c):
+        dTa_dz = -5E+03/((m_c)*Cp_c)
     
     
     # Pressure-drop:
@@ -321,7 +322,7 @@ def ode_system(z,Y):
     return dY_dz
 
 # 7) ------- Solve ODE system: ------- 
-for z in range(78):
+for z in range(n_z):
     print(f"z = {z}")
     print(f"Y_list[{z}] = {Y_list[z]}")
     sol = solve_ivp(ode_system, (0, dz), Y_list[z], method="Radau")

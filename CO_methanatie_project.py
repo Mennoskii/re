@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 # i. Feed conditions:  
 T_0 = 280+273 # Inlet temperature (K) -> Fill in with correct value
 P_0 =  20# Inlet pressure (bar) -> Fill in with correct value
+R = 8.314 # Ideal gas constant (J/mol.K)
+C_0 = P_0/(R*T_0)
 GHSV =  3000# Gas-hourly space velocity (h-1)
 GHSV_s = GHSV/3600
 Ta_0 = 280+273 # Inlet temperature of the cooling liquid (K) -> Fill in with correct value
@@ -72,7 +74,7 @@ d_cat = 0.001 # Diameter of spherical catalyst particles (m)
 
 eps = 0.3 # Effective void fraction of catalyst bed (-)-> Fill in with correct value
 rho_cat =  3950 # Density of Ni/Al2O3 catalyst (kg/m³)-> Fill in with correct value
-rho_bed =  rho_cat*(1-eps)*4/3*np.pi*d_cat**3 #-> Fill in with correct formula
+rho_bed =  rho_cat*(1-eps) #-> Fill in with correct formula
 U = 0 # Global heat transfer coefficient (W/m².K) -> Fill in with correct value
 dH_vap_ref = 1.603E+03 # Enthalpy of vaporization of cooling water (kJ/kg) at 55 bar
 
@@ -183,7 +185,7 @@ dz = L/n_z  # Segment size (m) -> Fill in with correct formula
 S = d_tube**2/4*np.pi# Cross-sectional area of 1 reactor tube (m²) -> Fill in with correct formula
 Peri = d_tube*np.pi # Perimeter of 1 reactor tube (m) -> Fill in with correct formula
 dV =  S*dz# Unit volume (m³) -> Fill in with correct formula
-dA = S # Unit area (m²) -> Fill in with correct formula
+dA = Peri*dz # Unit area (m²) -> Fill in with correct formula
 a = dA/dV # Specific area / volume (m²/m³) -> Fill in with correct formula
 
 # Lists & dictionaries:
@@ -207,7 +209,7 @@ Mr_0 = Mr_mix(y_list[0])
 mu_0 = mu_mix(y_list[0], T_list[0])
 cp_0 = cp_mix(y_list[0], T_list[0])
 rho_0 = rho_mix(Mr_0, P_list[0], T_list[0]) 
-u_0 = F_0/(1e5*) # Gas velocity (m/s) -> Fill in with correct formula
+u_0 = F_0/(1e5*S)*R*298 # Gas velocity (m/s) -> Fill in with correct formula
 #print(Y_list[0])
 # 6) ------- Define ODE system: 1-dimensional, steady-state, non-isothermal FBR: ------- 
 tol1 = 1E-12
@@ -233,7 +235,7 @@ def ode_system(z,Y):
     p = y*P
     #print(P,y)
     C = P*1e5/(R*T)
-    u = F_tot/dA * (1/C) # Gas velocity (m/s) -> Fill in with the correct formula 
+    u = F_tot/S * (1/C) # Gas velocity (m/s) -> Fill in with the correct formula 
     
     Mr_g = Mr_mix(y)
     mu_g = mu_mix(y, T)
@@ -322,10 +324,10 @@ def ode_system(z,Y):
 
 # 7) ------- Solve ODE system: ------- 
 for z in range(n_z):
-    print(f"z = {z}")
-    print(f"Y_list[{z}] = {Y_list[z]}")
+    #print(f"z = {z}")
+    #print(f"Y_list[{z}] = {Y_list[z]}")
     sol = solve_ivp(ode_system, (0, dz), Y_list[z], method="Radau")
-    print(f"sol.y[:,-1] = {sol.y[:,-1]}")
+    #print(f"sol.y[:,-1] = {sol.y[:,-1]}")
     Y_list[z+1] = sol.y[:,-1]
     Y_list[z+1] = sol.y[:,-1]
     F_list[z+1] = Y_list[z+1][:6]
