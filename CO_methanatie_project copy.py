@@ -183,7 +183,7 @@ dz = L/n_z  # Segment size (m) -> Fill in with correct formula
 S = d_tube**2/4*np.pi# Cross-sectional area of 1 reactor tube (m²) -> Fill in with correct formula
 Peri = d_tube*np.pi # Perimeter of 1 reactor tube (m) -> Fill in with correct formula
 dV =  S*dz# Unit volume (m³) -> Fill in with correct formula
-dA = S # Unit area (m²) -> Fill in with correct formula
+dA = Peri*dz # Unit area (m²) -> Fill in with correct formula
 a = dA/dV # Specific area / volume (m²/m³) -> Fill in with correct formula
 
 # Lists & dictionaries:
@@ -298,15 +298,15 @@ def ode_system(z,Y):
     # Energy balance:
     dH_COmeth = dH_COmeth_ref + cp_g*(T - T_ref)
     dH_WGS = dH_WGS_ref + cp_g*(T - T_ref)
-    dH_rx = np.array([dH_WGS,dH_COmeth])
-            
-    dT_dz = (U*dA/dV*(Ta-T)-np.dot(r,dH_rx))/(F_tot*cp_g)  # Fill in the correct formula
+
+    dT_dz = ((U*a*(Ta-T))-((r[0]*dH_WGS+r[1]*dH_COmeth)*rho_bed))/(F_tot*cp_g)*S  # Fill in the correct formula
     if dT_dz > 5E+03:
         dT_dz = 5E+03
     elif dT_dz < -5E+03:
         dT_dz = -5E+03
     
-    dTa_dz = U*(T-Ta)/((m_c)*Cp_c) # Fill in the correct formula
+
+    dTa_dz = 0 # Fill in the correct formula
     if dTa_dz > 5E+03/((m_c)*Cp_c):
         dTa_dz = 5E+03/((m_c)*Cp_c)
     elif dTa_dz < -5E+03/((m_c)*Cp_c):
@@ -323,10 +323,10 @@ def ode_system(z,Y):
 
 # 7) ------- Solve ODE system: ------- 
 for z in range(n_z):
-    print(f"z = {z}")
-    print(f"Y_list[{z}] = {Y_list[z]}")
+    #print(f"z = {z}")
+    #print(f"Y_list[{z}] = {Y_list[z]}")
     sol = solve_ivp(ode_system, (0, dz), Y_list[z], method="Radau")
-    print(f"sol.y[:,-1] = {sol.y[:,-1]}")
+    #print(f"sol.y[:,-1] = {sol.y[:,-1]}")
     Y_list[z+1] = sol.y[:,-1]
     Y_list[z+1] = sol.y[:,-1]
     F_list[z+1] = Y_list[z+1][:6]
@@ -344,8 +344,8 @@ from scipy.integrate import solve_ivp
 import math
 import matplotlib.pyplot as plt 
 plt.figure(0)
-plt.plot(np.linspace(0,L,n_z+1), T_list - 273.15, label="x")
-plt.plot(np.linspace(0,L,n_z+1), Ta_list - 273.15, label="y")
+plt.plot(np.linspace(0,L,n_z+1), T_list - 273.15, label="T")
+plt.plot(np.linspace(0,L,n_z+1), Ta_list - 273.15, label="T_a")
 plt.xlabel('Reactor length (m)')
 plt.ylabel('Temperature (°C)')
 plt.title('Temperature profile:')
