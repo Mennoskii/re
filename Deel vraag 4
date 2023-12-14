@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 # 2) ------- Define model parameters: ------- 
 
 # i. Feed conditions:  
-T_0 = 280+273 # Inlet temperature (K) -> Fill in with correct value
+T_0 = 350+273 # Inlet temperature (K) -> Fill in with correct value
 P_0 =  20# Inlet pressure (bar) -> Fill in with correct value
 GHSV =  3000# Gas-hourly space velocity (h-1)
 GHSV_s = GHSV/3600
@@ -346,6 +346,7 @@ import matplotlib.pyplot as plt
 plt.figure(0)
 plt.plot(np.linspace(0,L,n_z+1), T_list - 273.15, label="T")
 plt.plot(np.linspace(0,L,n_z+1), Ta_list - 273.15, label="T_a")
+plt.plot(np.linspace(0,L,n_z+1), 280*np.ones(n_z+1), label="Threshold",color = "r",ls = "--")
 plt.xlabel('Reactor length (m)')
 plt.ylabel('Temperature (°C)')
 plt.title('Temperature profile:')
