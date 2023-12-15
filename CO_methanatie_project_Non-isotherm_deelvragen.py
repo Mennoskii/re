@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 # 2) ------- Define model parameters: ------- 
 
 # i. Feed conditions:  
-T_0 = 350+273 # Inlet temperature (K) -> Fill in with correct value
+T_0 = 280+273 # Inlet temperature (K) -> Fill in with correct value
 P_0 =  20# Inlet pressure (bar) -> Fill in with correct value
-GHSV =  3000# Gas-hourly space velocity (h-1)
+GHSV =  10000# Gas-hourly space velocity (h-1)
 GHSV_s = GHSV/3600
 Ta_0 = 270+273 # Inlet temperature of the cooling liquid (K) -> Fill in with correct value
 m_c = 0.1 # Inlet flow of the cooling liquid (kg/s) -> Fill in with correct value
@@ -351,10 +351,15 @@ plt.xlabel('Reactor length (m)')
 plt.ylabel('Temperature (°C)')
 plt.title('Temperature profile:')
 plt.legend()
+Q =  np.sum(dA*U*(T_list-Ta_list)) /1000
+print(f"dQ/dt ={Q} kW")
+print(f"t ={GHSV_s**(-1)} s")
 
 plt.figure(1)
-plt.plot(np.linspace(0,L,n_z+1), F_list[:,0], label="u")
-plt.plot(np.linspace(0,L,n_z+1), F_list[:,3], label="v")
+plt.plot(np.linspace(0,L,n_z+1), F_list[:,0], label="CO2")
+plt.plot(np.linspace(0,L,n_z+1), F_list[:,1], label="H2")
+plt.plot(np.linspace(0,L,n_z+1), F_list[:,2], label="H2O")
+plt.plot(np.linspace(0,L,n_z+1), F_list[:,3], label="CO")
 plt.plot(np.linspace(0,L,n_z+1), F_list[:,4], label="CH4")
 plt.plot(np.linspace(0,L,n_z+1), F_list[:,0]+F_list[:,3]+F_list[:,4], label="CARBON")
 plt.xlabel('Reactor length (m)')
@@ -380,3 +385,5 @@ plt.xlabel('Reactor length (m)')
 plt.ylabel('bar')
 plt.title('partial pressure:')
 plt.legend()
+
+# %%
